@@ -1,0 +1,89 @@
+{
+  "name": "trade-signals",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Next.js application for trading signals using Bollinger Bands and other technical indicators",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint",
+    "type-check": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx scripts/seed-db.ts",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset --force",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "worker": "tsx scripts/worker.ts",
+    "backfill": "tsx scripts/backfill-data.ts",
+    "calculate-indicators": "tsx scripts/calculate-indicators.ts",
+    "generate-signals": "tsx scripts/generate-signals.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "clean": "rm -rf .next node_modules/.cache"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.7.1",
+    "@tanstack/react-query": "^5.90.2",
+    "@tanstack/react-query-devtools": "^5.90.2",
+    "chart.js": "^4.5.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^3.2.0",
+    "ioredis": "^5.3.2",
+    "lucide-react": "^0.544.0",
+    "next": "15.5.4",
+    "react": "19.1.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "19.1.0",
+    "react-hook-form": "^7.48.2",
+    "recharts": "^2.10.4",
+    "zod": "^3.22.4",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.4",
+    "prisma": "^5.7.1",
+    "tailwindcss": "^4",
+    "tsx": "^4.6.2",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "trading",
+    "signals",
+    "bollinger-bands",
+    "technical-analysis",
+    "nextjs",
+    "typescript",
+    "postgresql",
+    "redis",
+    "timescaledb"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/trade-signals.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/trade-signals/issues"
+  },
+  "homepage": "https://github.com/yourusername/trade-signals#readme",
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

@@ -1,0 +1,240 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Asset/Symbol Management
+model Asset {
+  id          String   @id @default(cuid())
+  symbol      String   @unique
+  name        String
+  assetType   AssetType
+  exchange    String?
+  currency    String   @default("USD")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  priceData   PriceData[]
+  indicators  Indicator[]
+  signals     Signal[]
+  watchlists  WatchlistAsset[]
+
+  @@map("assets")
+}
+
+// Historical Price Data
+model PriceData {
+  id        String   @id @default(cuid())
+  assetId   String
+  symbol    String   // Denormalized for performance
+  timestamp DateTime
+  open      Decimal  @db.Decimal(20, 8)
+  high      Decimal  @db.Decimal(20, 8)
+  low       Decimal  @db.Decimal(20, 8)
+  close     Decimal  @db.Decimal(20, 8)
+  volume    Decimal  @db.Decimal(20, 8)
+  interval  TimeInterval
+  source    String   // Data provider (yahoo, alpha-vantage, etc.)
+  createdAt DateTime @default(now())
+
+  // Relations
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  // Indexes for performance
+  @@unique([symbol, timestamp, interval])
+  @@index([symbol, timestamp])
+  @@index([timestamp])
+  @@index([symbol, interval])
+  @@map("price_data")
+}
+
+// Technical Indicators
+model Indicator {
+  id          String        @id @default(cuid())
+  assetId     String
+  symbol      String
+  timestamp   DateTime
+  indicatorType IndicatorType
+  period      Int
+  value       Decimal       @db.Decimal(20, 8)
+  metadata    Json?         // Store additional indicator-specific data
+  interval    TimeInterval
+  createdAt   DateTime      @default(now())
+
+  // Relations
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@unique([symbol, timestamp, indicatorType, period, interval])
+  @@index([symbol, indicatorType, timestamp])
+  @@index([timestamp])
+  @@map("indicators")
+}
+
+// Trading Signals
+model Signal {
+  id            String      @id @default(cuid())
+  assetId       String
+  symbol        String
+  timestamp     DateTime
+  signalType    SignalType
+  strength      Decimal     @db.Decimal(5, 4) // 0.0000 to 1.0000
+  price         Decimal     @db.Decimal(20, 8)
+  metadata      Json?       // Store signal-specific data
+  isExecuted    Boolean     @default(false)
+  executedAt    DateTime?
+  executedPrice Decimal?    @db.Decimal(20, 8)
+  createdAt     DateTime    @default(now())
+
+  // Relations
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([symbol, timestamp])
+  @@index([signalType, timestamp])
+  @@index([isExecuted])
+  @@map("signals")
+}
+
+// User Watchlists
+model Watchlist {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  assets WatchlistAsset[]
+
+  @@map("watchlists")
+}
+
+model WatchlistAsset {
+  id          String    @id @default(cuid())
+  watchlistId String
+  assetId     String
+  addedAt     DateTime  @default(now())
+
+  // Relations
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  asset     Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([watchlistId, assetId])
+  @@map("watchlist_assets")
+}
+
+// Trading Performance Tracking
+model Trade {
+  id            String      @id @default(cuid())
+  assetId       String
+  symbol        String
+  tradeType     TradeType
+  entryPrice    Decimal     @db.Decimal(20, 8)
+  exitPrice     Decimal?    @db.Decimal(20, 8)
+  quantity      Decimal     @db.Decimal(20, 8)
+  entryDate     DateTime
+  exitDate      DateTime?
+  pnl           Decimal?    @db.Decimal(20, 8)
+  pnlPercentage Decimal?    @db.Decimal(8, 4)
+  fees          Decimal?    @db.Decimal(20, 8)
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([symbol, entryDate])
+  @@index([pnl])
+  @@map("trades")
+}
+
+// Data Sync Tracking
+model DataSync {
+  id          String   @id @default(cuid())
+  symbol      String
+  source      String   // Data provider
+  lastSync    DateTime
+  interval    TimeInterval
+  recordCount Int
+  status      SyncStatus
+  errorMessage String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([symbol, source, interval])
+  @@index([symbol, source])
+  @@map("data_sync")
+}
+
+// Enums
+enum AssetType {
+  STOCK
+  CRYPTO
+  FOREX
+  COMMODITY
+  INDEX
+  ETF
+  BOND
+}
+
+enum TimeInterval {
+  MINUTE_1
+  MINUTE_5
+  MINUTE_15
+  MINUTE_30
+  HOUR_1
+  HOUR_4
+  DAY_1
+  WEEK_1
+  MONTH_1
+}
+
+enum IndicatorType {
+  BOLLINGER_UPPER
+  BOLLINGER_MIDDLE
+  BOLLINGER_LOWER
+  SMA
+  EMA
+  RSI
+  MACD
+  MACD_SIGNAL
+  MACD_HISTOGRAM
+  STOCH_K
+  STOCH_D
+  WILLIAMS_R
+  CCI
+  ATR
+  ADX
+}
+
+enum SignalType {
+  BUY
+  SELL
+  HOLD
+  STRONG_BUY
+  STRONG_SELL
+}
+
+enum TradeType {
+  LONG
+  SHORT
+}
+
+enum SyncStatus {
+  SUCCESS
+  FAILED
+  IN_PROGRESS
+  PENDING
+}
